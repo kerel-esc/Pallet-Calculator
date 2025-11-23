@@ -4,7 +4,7 @@
 //
 // This file controls:
 //   • Loading data (local defaults + spiders-data.json override)
-//   • "Fails" screen: model → tester → fail explanation
+//   • "Fails" screen: model → tester → fail explanation (+ search)
 //   • "Calculators" screen: pallet-count and end-of-day helpers
 //   • Simple hash-based navigation between tabs
 //   • Visual transitions between screens + button press animation
@@ -129,12 +129,30 @@ function initFails() {
     const failSelect = content.querySelector('#failSelect');
     const explanation = content.querySelector('#failExplanation');
 
+    // Optional search elements (only if you've added them in the HTML template)
+    const searchArea = content.querySelector('#failSearchArea');
+    const searchInput = content.querySelector('#failSearchInput');
+    const searchResults = content.querySelector('#failSearchResults');
+
+    // Initial state for dropdowns
     modelSelect.innerHTML =
         '<option value="" selected disabled>Select a model</option>' +
         appData.models
             .map(model => `<option value="${model.id}">${model.label}</option>`)
             .join('');
 
+    testerSelect.disabled = true;
+    failSelect.disabled = true;
+    explanation.textContent = 'Select a model to begin.';
+
+    // Hide search area until a model is selected (if it exists)
+    if (searchArea) {
+        searchArea.classList.add('hidden');
+        if (searchInput) searchInput.value = '';
+        if (searchResults) searchResults.innerHTML = '';
+    }
+
+    // When model changes, populate tester dropdown and reset the rest
     modelSelect.addEventListener('change', () => {
         const selectedModel = appData.models.find(
             model => model.id === modelSelect.value
@@ -151,9 +169,17 @@ function initFails() {
         failSelect.disabled = true;
         failSelect.innerHTML =
             '<option value="" disabled selected>Select a fail</option>';
-        explanation.textContent = 'Pick a tester next.';
+        explanation.textContent = 'Pick a tester next or search';
+
+        // Show and reset search area
+        if (searchArea) {
+            searchArea.classList.remove('hidden');
+        }
+        if (searchInput) searchInput.value = '';
+        if (searchResults) searchResults.innerHTML = '';
     });
 
+    // When tester changes, populate fail dropdown
     testerSelect.addEventListener('change', () => {
         const selectedModel = appData.models.find(
             model => model.id === modelSelect.value
@@ -202,6 +228,7 @@ function initFails() {
             : 'No fails found for this tester.';
     });
 
+    // When fail changes, show explanation
     failSelect.addEventListener('change', () => {
         const selectedModel = appData.models.find(
             model => model.id === modelSelect.value
@@ -219,6 +246,79 @@ function initFails() {
 
         explanation.textContent = selectedFail ? selectedFail.info : '';
     });
+
+    // ==============================
+    // Fail Search Feature (simple list)
+    // ==============================
+    if (searchInput && searchResults) {
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.trim().toLowerCase();
+            searchResults.innerHTML = '';
+
+            if (!query) {
+                // Empty search: nothing to show
+                return;
+            }
+
+            const selectedModel = appData.models.find(
+                model => model.id === modelSelect.value
+            );
+            if (!selectedModel) {
+                // No model selected yet – cannot search
+                searchResults.innerHTML = `<div class="muted">Select a model first.</div>`;
+                return;
+            }
+
+            const matches = [];
+
+            // Search all testers and fails of this model
+            for (const tester of selectedModel.testers) {
+                const fails = tester.fails || [];
+                for (const fail of fails) {
+                    const labelMatch = fail.label.toLowerCase().includes(query);
+                    const groupMatch =
+                        fail.group && fail.group.toLowerCase().includes(query);
+                    const infoMatch = fail.info.toLowerCase().includes(query);
+
+                    if (labelMatch || groupMatch || infoMatch) {
+                        matches.push({ tester, fail });
+                    }
+                }
+            }
+
+            if (matches.length === 0) {
+                searchResults.innerHTML = `<div class="muted">No results found</div>`;
+                return;
+            }
+
+            // Build visual list of results
+            for (const { tester, fail } of matches) {
+                const div = document.createElement('div');
+                div.className = 'search-result';
+                div.innerHTML = `
+                    <strong>${fail.label}</strong>
+                    <small>${tester.label}</small>
+                `;
+
+                div.addEventListener('click', () => {
+                    // Select tester
+                    testerSelect.value = tester.id;
+                    testerSelect.dispatchEvent(new Event('change'));
+
+                    // Wait a moment for the fail dropdown to populate, then select
+                    setTimeout(() => {
+                        failSelect.value = fail.id;
+                        failSelect.dispatchEvent(new Event('change'));
+
+                        // Scroll to the explanation area
+                        explanation.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 50);
+                });
+
+                searchResults.appendChild(div);
+            }
+        });
+    }
 }
 
 // =====================================

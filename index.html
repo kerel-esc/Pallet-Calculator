@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-    <title>Spiders Tools</title>
+    <title>Spider Tools</title>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="stylesheet" href="style.css"></link>
@@ -26,7 +26,7 @@
     <template id="tpl-fails">
         <div style="width:100%">
             <h2>Fails</h2>
-            <p class="muted">Pick a Model → Tester → Fail</p>
+            <p class="muted">Pick a Model → Tester → Fail<br> or use Model → Search for quick lookup</p>
             <div class="row" style="width:min(480px,100%);text-align:left;">
                 <label>
                     Model
@@ -45,6 +45,11 @@
                     </select>
                 </label>
                 <div id="failExplanation" class="muted">Choose a fail to see an explanation.</div>
+                <div id="failSearchArea" class="fail-search hidden">
+                    <h3 class="muted">Search fails</h3>
+                        <input id="failSearchInput" type="text" placeholder="Type to search..." autocomplete="off">
+                <div id="failSearchResults"></div>
+            </div>
             </div>
         </div>
     </template>
