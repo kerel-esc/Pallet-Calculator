@@ -14,12 +14,31 @@ const FILES_TO_CACHE = [
 ];
 
 // Install: cache files
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(FILES_TO_CACHE))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Cache the core static files
+      await cache.addAll(FILES_TO_CACHE);
+
+      // Try to cache spiders-data.json if it exists
+      try {
+        const response = await fetch("./spiders-data.json", { cache: "no-store" });
+        if (response.ok) {
+          await cache.put("./spiders-data.json", response.clone());
+          console.log("Cached spiders-data.json");
+        } else {
+          console.warn("spiders-data.json exists but could not be cached.");
+        }
+      } catch (err) {
+        // File missing or offline — safe to ignore
+        console.warn("Optional spiders-data.json not cached (not found or offline).");
+      }
+    })
   );
+
   self.skipWaiting();
 });
+
 
 // Activate: clear old caches
 self.addEventListener('activate', (event) => {
