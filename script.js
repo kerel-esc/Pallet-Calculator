@@ -806,3 +806,29 @@ if ('serviceWorker' in navigator) {
             .catch(err => console.error('Service Worker registration failed:', err));
     });
 }
+// =====================================
+// Floating Info Button Modal
+// =====================================
+
+document.addEventListener("DOMContentLoaded", () => {
+    const infoBtn = document.getElementById("infoBtn");
+    const modal = document.getElementById("aboutModal");
+    const closeBtn = document.getElementById("closeAbout");
+
+    if (!infoBtn || !modal || !closeBtn) return;
+
+    infoBtn.addEventListener("click", () => {
+        modal.classList.remove("hidden");
+    });
+
+    closeBtn.addEventListener("click", () => {
+        modal.classList.add("hidden");
+    });
+
+    // Close when tapping outside modal-content
+    modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+            modal.classList.add("hidden");
+        }
+    });
+});

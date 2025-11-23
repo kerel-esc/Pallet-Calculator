@@ -124,6 +124,30 @@
             </div>
         </div>
     </template>
+    <!-- Floating Info Button -->
+    <button id="infoBtn" class="floating-info-btn">?</button>
+
+    <!-- About Modal -->
+        <div id="aboutModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>About Spider Tools</h2>
+                <p class="muted">A lightweight offline tool to support Spiders on the production line.</p>
+
+            <h3>Features</h3>
+            <ul>
+                <li>Fail lookup (Model → Tester → Fail)</li>
+                <li>Pallet + End-of-Day calculators</li>
+                <li>Offline PWA support</li>
+                <li>Custom data via spiders-data.json</li>
+            </ul>
+
+            <p class="muted" style="margin-top:15px;font-size:12px;">
+            Version 1.0 • Works offline • Made for Spiders 🕷️
+            </p>
+
+            <button id="closeAbout" class="tabbtn" style="margin-top:15px;">Close</button>
+    </div>
+</div>
 
     <script src="script.js"></script>
 </body>
