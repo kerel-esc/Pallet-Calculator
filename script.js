@@ -111,7 +111,7 @@ async function tryLoadData() {
 
     // Load fails-data.json
     try {
-        const res = await fetch('fails-data.json', { cache: 'no-store' });
+        const res = await fetch('fails-data.json');
         if (res.ok) {
             const json = await res.json();
             if (Array.isArray(json.models)) {
@@ -127,7 +127,7 @@ async function tryLoadData() {
 
     // Load calculator-data.json
     try {
-        const res = await fetch('calculator-data.json', { cache: 'no-store' });
+        const res = await fetch('calculator-data.json');
         if (res.ok) {
             const json = await res.json();
             if (Array.isArray(json.calculatorModels)) {
@@ -1109,7 +1109,7 @@ async function init() {
 document.addEventListener('DOMContentLoaded', () => {
     init();
 
-    
+
 document.getElementById('homeLogo').addEventListener('click', () => {
     vibrate(10);
     window.location.reload();   // Hard reload of the app

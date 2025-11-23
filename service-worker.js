@@ -8,7 +8,10 @@ const FILES_TO_CACHE = [
   './style.css',
   './script.js',
   './manifest.json',
-  './logo.png'
+  './logo.png',
+  './fails-data.json',
+  './calculator-data.json'
+
   // fails-data.json and calculator-data.json are cached optionally
 ];
 
