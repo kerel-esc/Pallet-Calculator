@@ -12,7 +12,7 @@
 //   • PWA: install banner, version checker, About modal metadata
 //
 
-const APP_VERSION = '1.1.1';
+const APP_VERSION = '1.1.2';   // ⬅ UPDATED VERSION
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -109,10 +109,10 @@ async function tryLoadData() {
     let failsVersion = DEFAULT_DATA.meta.failsVersion;
     let calcVersion = DEFAULT_DATA.meta.calcVersion;
 
-    // Load fails-data.json
+    // Load fails-data.json (VERSIONED)
     try {
         console.log('Fetching fails-data.json...');
-        const res = await fetch('fails-data.json');
+        const res = await fetch(`fails-data.json?v=${APP_VERSION}`, { cache: 'no-store' });
         if (res.ok) {
             const json = await res.json();
             if (Array.isArray(json.models)) {
@@ -129,10 +129,10 @@ async function tryLoadData() {
         console.warn('Failed to load fails-data.json, using defaults', e);
     }
 
-    // Load calculator-data.json
+    // Load calculator-data.json (VERSIONED)
     try {
         console.log('Fetching calculator-data.json...');
-        const res = await fetch('calculator-data.json');
+        const res = await fetch(`calculator-data.json?v=${APP_VERSION}`, { cache: 'no-store' });
         if (res.ok) {
             const json = await res.json();
             if (Array.isArray(json.calculatorModels)) {
@@ -169,10 +169,8 @@ function data() {
 // Haptics (vibration helper)
 // =====================================
 
-function vibrate(pattern = 20) {
-    if (navigator.vibrate) {
-        navigator.vibrate(pattern);
-    }
+function vibrate(pattern = 70) {
+    if (navigator.vibrate) navigator.vibrate(pattern);
 }
 
 // =====================================
@@ -189,12 +187,10 @@ function attachPressAnimation(element) {
     element.addEventListener('mouseup', remove);
     element.addEventListener('mouseleave', remove);
 
-    // Touch support
     element.addEventListener('touchstart', add, { passive: true });
     element.addEventListener('touchend', remove);
     element.addEventListener('touchcancel', remove);
 }
-
 // =====================================
 // "Fails" Screen
 // =====================================
