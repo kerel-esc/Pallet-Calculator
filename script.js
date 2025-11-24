@@ -282,10 +282,14 @@ function initFails() {
 
     // Load last selected model (if any)
     const savedModelId = localStorage.getItem(STORAGE_KEYS.lastModelId);
-    if (savedModelId && appData.models.some(m => m.id === savedModelId)) {
+if (savedModelId && appData.models.some(m => m.id === savedModelId)) {
+    // Delay restoring last model until UI is fully mounted
+    requestAnimationFrame(() => {
         modelSelect.value = savedModelId;
         modelSelect.dispatchEvent(new Event('change'));
-    }
+    });
+}
+
 
     // When model changes, reset tester/fails, and show search
     modelSelect.addEventListener('change', () => {
