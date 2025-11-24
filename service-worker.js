@@ -1,81 +1,65 @@
-// =====================================
-// Spider Tools – Service Worker
-// =====================================
+// =====================================================
+// Spider Tools – CLEAN Service Worker (FINAL VERSION)
+// =====================================================
 
-const CACHE_NAME = 'spiders-tools-v1.1.8'; // bumped version
+const CACHE_NAME = 'spiders-v2.0.0';
 
-const FILES_TO_CACHE = [
+// Only cache the app shell — NEVER the JSON
+const APP_SHELL = [
   './',
   './index.html',
   './style.css',
   './script.js',
   './manifest.json',
   './logo.png'
-  // ⛔ JSON files intentionally NOT cached here
 ];
 
-// Install: cache core shell files only
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(FILES_TO_CACHE);
-    })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL))
   );
-
   self.skipWaiting();
 });
 
-// Activate: clean up old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )
-    )
-  );
-
-  self.clients.claim();
-});
-
-// Fetch handler
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
-
-  // ⛔ Let JSON requests go straight to the network.
-  // Script.js already uses `cache: 'no-store'` and has its own fallback.
-  if (
-    url.pathname.endsWith('/fails-data.json') ||
-    url.pathname.endsWith('/calculator-data.json') ||
-    url.pathname.endsWith('fails-data.json') ||
-    url.pathname.endsWith('calculator-data.json')
-  ) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // Cache-first for everything else (app shell)
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request).catch(() => {
-          // Optional: fallback to index.html for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.map(k => {
+          if (k !== CACHE_NAME) return caches.delete(k);
         })
       );
     })
   );
+  self.clients.claim();
 });
 
-// Allow page to trigger skipWaiting (used by update banner)
-self.addEventListener('message', (event) => {
+// Fetch handler
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  // 🚫 NEVER handle JSON. Let script.js load it fresh.
+  if (url.pathname.endsWith('fails-data.json') ||
+      url.pathname.endsWith('calculator-data.json')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Cache-first for app shell
+  event.respondWith(
+    caches.match(event.request).then(cached => {
+      return cached ||
+        fetch(event.request).catch(() => {
+          if (event.request.mode === 'navigate') {
+            return caches.match('./index.html');
+          }
+        });
+    })
+  );
+});
+
+// Allow skipWaiting
+self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
