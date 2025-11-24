@@ -1,5 +1,5 @@
 // Cache name (change version to force refresh)
-const CACHE_NAME = 'spiders-tools-v3-1.1.1';
+const CACHE_NAME = 'spiders-tools-v3-1.1.3';
 
 // Files to cache for offline use
 const FILES_TO_CACHE = [

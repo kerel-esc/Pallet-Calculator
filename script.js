@@ -978,6 +978,14 @@ if ('serviceWorker' in navigator) {
             })
             .catch(err => console.error('Service Worker registration failed:', err));
     });
+// Handles page reload after SW update
+let refreshing = false;
+
+navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+});
 }
 
 // =====================================
