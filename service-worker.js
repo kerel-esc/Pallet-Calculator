@@ -38,14 +38,14 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // 🚫 NEVER handle JSON. Let script.js load it fresh.
-  if (url.pathname.endsWith('fails-data.json') ||
-      url.pathname.endsWith('calculator-data.json')) {
+  // Allow any request containing the JSON filenames, INCLUDING versioned URLs
+  if (url.pathname.includes('fails-data.json') ||
+      url.pathname.includes('calculator-data.json')) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Cache-first for app shell
+  // Cache-first for everything else
   event.respondWith(
     caches.match(event.request).then(cached => {
       return cached ||
@@ -57,6 +57,7 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
 
 // Allow skipWaiting
 self.addEventListener('message', event => {
