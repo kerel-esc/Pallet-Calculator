@@ -2,7 +2,7 @@
 // Spider Tools – Service Worker
 // =====================================
 
-const CACHE_NAME = 'spiders-tools-v1.1.5';
+const CACHE_NAME = 'spiders-tools-v1.1.7';
 
 const FILES_TO_CACHE = [
   './',
