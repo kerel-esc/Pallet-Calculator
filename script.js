@@ -1,5 +1,5 @@
 // =====================================
-// Spiders Tools – Application Logic
+// Spiders Tools – Application Logic (CLEAN VERSION)
 // =====================================
 //
 // Features:
@@ -8,22 +8,20 @@
 //   • "Calculators" screen: pallet-count and end-of-day calculators
 //   • Swipe gesture to switch calculator modes
 //   • Haptic feedback (where supported)
-//   • Hash-based navigation + "last screen" memory
+//   • Hash-based navigation (NO remembering last screen/model)
 //   • PWA: install banner, version checker, About modal metadata
 //
 
-const APP_VERSION = '3.0.0';   // ⬅ UPDATED VERSION
+const APP_VERSION = '3.0.0';
 
-// Storage keys
+// Storage keys (only keep A2HS preference – no model/screen memory)
 const STORAGE_KEYS = {
-    lastScreen: 'spiders:lastScreen',
-    lastModelId: 'spiders:lastModelId',
     a2hsDismissed: 'spiders:a2hsDismissed'
 };
 
 // Main content container where templates are rendered
 const content = document.getElementById('content');
-let currentScreen = 'fails';
+let currentScreen = 'calculators';
 
 // -------------------------------------
 // Data: defaults + optional JSON overrides
@@ -109,32 +107,31 @@ async function tryLoadData() {
     let failsVersion = DEFAULT_DATA.meta.failsVersion;
     let calcVersion = DEFAULT_DATA.meta.calcVersion;
 
-// Load fails-data.json (safe version — prevents wiping data when JSON fails)
-try {
-    console.log('Fetching fails-data.json...');
-    const res = await fetch(`fails-data.json?v=${APP_VERSION}`, { cache: 'no-store' });
+    // Load fails-data.json (safe version — prevents wiping data when JSON fails)
+    try {
+        console.log('Fetching fails-data.json...');
+        const res = await fetch(`fails-data.json?v=${APP_VERSION}`, { cache: 'no-store' });
 
-    if (res.ok) {
-        const json = await res.json();
+        if (res.ok) {
+            const json = await res.json();
 
-        if (Array.isArray(json.models)) {
-            // Only overwrite if models array is valid
-            models = json.models;
-            console.log('Loaded fails-data.json with', json.models.length, 'model(s)');
+            if (Array.isArray(json.models)) {
+                // Only overwrite if models array is valid
+                models = json.models;
+                console.log('Loaded fails-data.json with', json.models.length, 'model(s)');
+            } else {
+                console.warn("fails-data.json does not contain a valid 'models' array — keeping previous data");
+            }
+
+            if (typeof json.version === 'string') {
+                failsVersion = json.version;
+            }
         } else {
-            console.warn("fails-data.json does not contain a valid 'models' array — keeping previous data");
+            console.warn('fails-data.json returned HTTP', res.status, '— keeping previous data');
         }
-
-        if (typeof json.version === 'string') {
-            failsVersion = json.version;
-        }
-    } else {
-        console.warn("fails-data.json returned HTTP", res.status, "— keeping previous data");
+    } catch (e) {
+        console.warn('Error loading fails-data.json — keeping previous data instead of wiping', e);
     }
-} catch (e) {
-    console.warn("Error loading fails-data.json — keeping previous data instead of wiping", e);
-}
-
 
     // Load calculator-data.json (VERSIONED)
     try {
@@ -198,6 +195,7 @@ function attachPressAnimation(element) {
     element.addEventListener('touchend', remove);
     element.addEventListener('touchcancel', remove);
 }
+
 // =====================================
 // "Fails" Screen
 // =====================================
@@ -215,7 +213,7 @@ function initFails() {
     const searchInput = content.querySelector('#failSearchInput');
     const searchResults = content.querySelector('#failSearchResults');
 
-    // Populate models
+    // Populate models (always fresh, no memory)
     modelSelect.innerHTML =
         '<option value="" selected disabled>Select a model</option>' +
         appData.models
@@ -280,25 +278,12 @@ function initFails() {
         });
     }
 
-    // Load last selected model (if any)
-    const savedModelId = localStorage.getItem(STORAGE_KEYS.lastModelId);
-if (savedModelId && appData.models.some(m => m.id === savedModelId)) {
-    // Delay restoring last model until UI is fully mounted
-    requestAnimationFrame(() => {
-        modelSelect.value = savedModelId;
-        modelSelect.dispatchEvent(new Event('change'));
-    });
-}
-
-
     // When model changes, reset tester/fails, and show search
     modelSelect.addEventListener('change', () => {
         const selectedModel = appData.models.find(
             model => model.id === modelSelect.value
         );
         if (!selectedModel) return;
-
-        localStorage.setItem(STORAGE_KEYS.lastModelId, selectedModel.id);
 
         renderTesterButtons(selectedModel);
         testerSelect.value = '';
@@ -479,7 +464,7 @@ function initCalculators() {
     miniTabs.forEach(attachPressAnimation);
     attachPressAnimation(calcButton);
 
-    // Populate calculator models
+    // Populate calculator models (no memory – always default first model)
     modelSelect.innerHTML =
         appData.calculatorModels
             .map(model => `<option value="${model.id}">${model.label}</option>`)
@@ -899,6 +884,7 @@ document
 
 /**
  * Load a given screen ("fails" or "calculators") with a small animation.
+ * No memory: just responds to current hash / button click.
  */
 function load(name) {
     const tpl = document.getElementById('tpl-' + name);
@@ -906,9 +892,6 @@ function load(name) {
 
     const validScreens = ['fails', 'calculators'];
     if (!validScreens.includes(name)) return;
-
-    // Save last screen preference
-    localStorage.setItem(STORAGE_KEYS.lastScreen, name);
 
     let transitionClass = 'view--fade';
     if (currentScreen === 'fails' && name === 'calculators') {
@@ -1097,20 +1080,17 @@ async function init() {
     await tryLoadData();
 
     // Decide initial screen:
+    // – Default: calculators
+    // – If URL hash explicitly set (#fails or #calculators), respect it
     const validScreens = ['fails', 'calculators'];
 
-    let initialScreen = 'calculators'; // default per your request
+    let initialScreen = 'calculators';
 
     const rawHash = location.hash || '';
     const hashName = rawHash.replace('#', '');
 
     if (validScreens.includes(hashName)) {
         initialScreen = hashName;
-    } else {
-        const stored = localStorage.getItem(STORAGE_KEYS.lastScreen);
-        if (stored && validScreens.includes(stored)) {
-            initialScreen = stored;
-        }
     }
 
     currentScreen = initialScreen;
@@ -1133,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (homeLogo) {
         homeLogo.addEventListener('click', () => {
             vibrate(10);
-            window.location.reload();   // Full reload as you requested
+            window.location.reload();   // Full reload
         });
     }
 });
